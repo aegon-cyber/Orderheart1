@@ -1,0 +1,1011 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>“心序” AI情绪记录 - 产品展示</title>
+    
+    <style>
+        /* 自定义字体 */
+        @font-face {
+            font-family: 'MyCustomFont';
+            /* 修正点：加上了 url()，并去掉了中间的逗号 */
+            src: url('fonts/DFPGangBiW2-GB.ttf') format('truetype');
+        }
+
+        :root {
+            --bg-color: #f2e6d5;
+            --paper-color: #fffef9;
+            --text-main: #5d4037;
+            --text-light: #8d6e63;
+            --accent-color: #d7ccc8;
+            --highlight: #ffccbc;
+            --btn-hover: #4e342e;
+            --shadow-soft: 0 10px 25px rgba(93, 64, 55, 0.15);
+            --border-radius: 20px;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-color);
+            font-family: 'Nunito', 'Microsoft YaHei', sans-serif;
+            color: var(--text-main);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden; /* 禁止整页滚动，内容在卡片内 */
+        }
+
+        /* --- 导航栏 --- */
+        .navbar {
+            height: 60px;
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
+            background-color: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(141, 110, 99, 0.15);
+            z-index: 1000;
+            justify-content: space-between;
+            position: fixed;
+            top: 0;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .logo-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-shrink: 0;
+        }
+
+        .app-icon {
+            width: 32px;
+            height: 32px;
+            background-color: var(--text-light);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 16px;
+        }
+
+        .brand-name {
+            font-family: 'MyCustomFont', serif;
+            font-size: 1.2rem;
+            color: var(--text-main);
+            font-weight: bold;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 20px;
+            overflow-x: auto; /* 移动端支持横向滑动 */
+            scrollbar-width: none; /* 隐藏滚动条 */
+            -ms-overflow-style: none;
+            padding-left: 20px;
+        }
+        .nav-links::-webkit-scrollbar { display: none; }
+
+        .nav-item {
+            cursor: pointer;
+            color: var(--text-light);
+            font-weight: 600;
+            font-size: 0.95rem;
+            white-space: nowrap;
+            transition: color 0.3s;
+            position: relative;
+        }
+
+        .nav-item.active {
+            color: var(--text-main);
+        }
+        .nav-item.active::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background-color: var(--text-main);
+        }
+
+        /* --- 主舞台 --- */
+        .main-stage {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            padding-top: 60px; /* 留出导航栏高度 */
+        }
+
+        /* 日历容器 */
+        .calendar-container {
+            width: 85vw;
+            max-width: 1200px;
+            /* 默认电脑端 16:9 */
+            aspect-ratio: 16 / 9;
+            position: relative;
+            perspective: 2500px;
+        }
+
+        /* 顶部线圈 */
+        .binder-top {
+            position: absolute;
+            top: -15px;
+            left: 5%;
+            right: 5%;
+            height: 40px;
+            z-index: 200;
+            display: flex;
+            justify-content: space-evenly;
+            pointer-events: none;
+        }
+
+        .ring {
+            width: 12px;
+            height: 35px;
+            background: linear-gradient(to right, #8d6e63, #d7ccc8, #8d6e63);
+            border-radius: 6px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+        }
+
+        /* 页面样式 */
+        .page {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: var(--paper-color);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-soft);
+            transform-origin: top center;
+            transition: transform 0.6s cubic-bezier(0.25, 1, 0.5, 1);
+            padding: 50px 60px;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            border-top: 20px solid #eae0d5;
+            background-image: 
+                linear-gradient(rgba(240, 230, 210, 0.1) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(240, 230, 210, 0.1) 1px, transparent 1px);
+            background-size: 20px 20px;
+            cursor: grab;
+        }
+        
+        .page:active { cursor: grabbing; }
+
+        .page.flipped {
+            transform: rotateX(-120deg);
+            pointer-events: none;
+            opacity: 0.6;
+        }
+
+        .page.dragging { transition: none; }
+
+        /* 页面内容布局 */
+        .page-content {
+            height: 100%;
+            display: flex;
+            gap: 40px;
+            overflow: hidden; /* 防止内容益出 */
+        }
+
+        .col-left {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            overflow-y: auto; /* 内容过多可滚动 */
+        }
+        .col-right {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: rgba(141, 110, 99, 0.05);
+            border-radius: 20px;
+            padding: 20px;
+        }
+
+        /* 文本排版 */
+        h1 { font-family: 'MyCustomFont', serif; font-size: 3rem; margin: 0 0 15px 0; color: var(--text-main); }
+        h2 { font-family: 'MyCustomFont', sans-serif; font-size: 1.8rem; margin-bottom: 15px; border-bottom: 2px dashed var(--accent-color); display: inline-block; color: var(--text-main); }
+        h3 { font-size: 1.1rem; color: var(--text-light); margin: 10px 0 5px 0; font-weight: 700; }
+        p { line-height: 1.6; font-size: 1rem; color: #6d5b54; margin-bottom: 10px; text-align: justify; }
+        
+        .highlight-box {
+            background-color: #fff;
+            border-left: 4px solid var(--text-light);
+            padding: 12px;
+            margin: 8px 0;
+            border-radius: 0 8px 8px 0;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.03);
+            font-size: 0.95rem;
+        }
+
+        .tag { display: inline-block; background: var(--highlight); padding: 4px 12px; border-radius: 15px; font-size: 0.85rem; margin-right: 8px; margin-bottom: 8px; color: var(--text-main); }
+
+        .page-num { position: absolute; bottom: 15px; left: 50%; transform: translateX(-50%); font-family: 'ZCOOL XiaoWei', serif; color: var(--text-light); font-size: 0.9rem; }
+        
+        /* 拖动提示文字 */
+        .drag-hint {
+            position: absolute;
+            bottom: 15px;
+            right: 30px;
+            color: var(--text-light);
+            font-size: 0.8rem;
+            animation: bounce 2s infinite;
+            pointer-events: none;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-5px); }
+        }
+
+        /* --- 翻页按钮 (新增) --- */
+        .nav-btn {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background-color: rgba(93, 64, 55, 0.8);
+            border: none;
+            color: #fff;
+            font-size: 24px;
+            cursor: pointer;
+            z-index: 500;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            transition: all 0.3s ease;
+        }
+        .nav-btn:hover { background-color: var(--btn-hover); transform: translateY(-50%) scale(1.1); }
+        .nav-btn:active { transform: translateY(-50%) scale(0.95); }
+        .prev-btn { left: 20px; }
+        .next-btn { right: 20px; }
+
+        /* 禁用状态 */
+        .nav-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+
+        /* =========================================
+           移动端/小屏幕 响应式适配 (Media Queries)
+           ========================================= */
+        @media screen and (max-width: 1024px) {
+            .calendar-container { width: 92vw; aspect-ratio: 4 / 3; } /* 平板比例 */
+            .page { padding: 40px; }
+            h1 { font-size: 2.5rem; }
+        }
+
+        @media screen and (max-width: 768px) {
+            /* 1. 调整导航栏 */
+            .navbar { padding: 0 15px; }
+            .nav-links { gap: 15px; padding-left: 10px; }
+            
+            /* 2. 调整按钮位置 (避免遮挡内容) */
+            .nav-btn { 
+                width: 40px; height: 40px; font-size: 18px; 
+                top: auto; bottom: 20px; transform: none; /* 移到底部控制栏 */
+                background-color: rgba(93, 64, 55, 0.9);
+            }
+            .nav-btn:hover { transform: scale(1.1); }
+            .prev-btn { left: 20px; top:auto; bottom: 120px; } /* 放在页面侧边或底部 */
+            .next-btn { right: 20px; top:auto; bottom: 120px; }
+            
+            /* 更佳方案：将按钮悬浮在屏幕两侧中部，稍微透明 */
+            .nav-btn { bottom: auto; top: 55%; transform: translateY(-50%); opacity: 0.6; }
+            .prev-btn { left: 5px; }
+            .next-btn { right: 5px; }
+
+            /* 3. 调整主舞台与日历容器 */
+            .main-stage { align-items: flex-start; padding-top: 80px; } /* 顶部留更宽 */
+            
+            .calendar-container {
+                width: 90vw;
+                height: 75vh; /* 手机上改用高度控制 */
+                aspect-ratio: auto; /* 取消强制比例 */
+            }
+
+            /* 4. 调整纸张布局：由左右变上下 */
+            .page { 
+                padding: 30px 20px; 
+                border-top-width: 15px;
+            }
+            .binder-top { top: -10px; height: 30px; }
+            .ring { height: 25px; width: 10px; }
+
+            .page-content {
+                flex-direction: column; /* 上下布局 */
+                gap: 20px;
+                overflow-y: auto; /* 允许内容长滚动 */
+            }
+
+            .col-left, .col-right {
+                flex: none; /* 取消弹性伸缩 */
+                width: 100%;
+            }
+            
+            .col-right {
+                padding: 15px;
+                margin-bottom: 20px;
+            }
+
+            /* 5. 调整字体大小 */
+            h1 { font-size: 2rem; text-align: center; }
+            h2 { font-size: 1.5rem; }
+            p { font-size: 0.95rem; }
+            
+            .drag-hint { display: none; } /* 手机屏太小，隐藏提示文案，靠按钮 */
+            .date-badge { transform: scale(0.8); right: 10px; top: 10px; }
+        }
+        /* --- 功能展示页面专用样式 --- */
+        /* 右侧列：设置为可内部滚动 */
+        .col-right-scrollable {
+            flex: 1;
+            height: 100%; /* 占满高度 */
+            overflow-y: auto; /* 核心：内容超出时显示滚动条 */
+            padding: 10px 20px; /* 给滚动条留点空间 */
+            
+            /* 滚动条样式美化 (Chrome/Safari) */
+            scrollbar-width: thin; /* Firefox */
+            scrollbar-color: var(--text-light) transparent; /* Firefox */
+        }
+        /* Webkit浏览器滚动条美化 */
+        .col-right-scrollable::-webkit-scrollbar {
+            width: 6px;
+        }
+        .col-right-scrollable::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .col-right-scrollable::-webkit-scrollbar-thumb {
+            background-color: #d7ccc8; /* 浅棕色滚动条 */
+            border-radius: 10px;
+        }
+        .col-right-scrollable::-webkit-scrollbar-thumb:hover {
+            background-color: var(--text-light);
+        }
+        /* 图片网格容器 */
+        .screens-grid {
+            display: grid;
+            /* 横屏时：2列布局，节省垂直空间 */
+            grid-template-columns: repeat(2, 1fr); 
+            gap: 20px;
+            width: 100%;
+        }
+        /* 单个图片卡片 */
+        .screen-item {
+            background: #fff;
+            padding: 10px;
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(93, 64, 55, 0.1);
+            transition: transform 0.2s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .screen-item:hover {
+            transform: translateY(-5px); /* 悬停微动效果 */
+        }
+        /* 图片容器：固定手机比例 */
+        .img-container {
+            width: 100%;
+            aspect-ratio: 9 / 16; /* 强制手机屏幕比例 */
+            background: #fdfbf7;
+            border-radius: 8px;
+            overflow: hidden;
+            position: relative;
+            border: 1px solid #efebe9;
+        }
+        .img-container img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover; /* 填满容器，保持美观 */
+            object-position: top; /* 从顶部开始显示 */
+        }
+        .screen-caption {
+            margin-top: 10px;
+            font-size: 0.9rem;
+            color: var(--text-light);
+            font-weight: bold;
+            text-align: center;
+        }
+        /* --- 媒体查询：竖屏模式适配 (保留您原有的竖屏习惯) --- */
+        /* 当屏幕高宽比小于 1 (即竖屏) 或者宽度较窄时 */
+        @media (max-width: 768px) or (orientation: portrait) {
+            .page-content {
+                flex-direction: column; /* 上下布局 */
+                overflow-y: auto; /* 允许整页滚动 */
+            }
+            
+            .col-left, .col-right-scrollable {
+                width: 100%;
+                flex: none; /* 取消弹性伸缩 */
+            }
+            /* 竖屏时，右侧图片区域的高度限制解除，或者给一个固定高度 */
+            .col-right-scrollable {
+                max-height: 500px; /* 给图片区限制高度，让它内部也能滑 */
+                margin-top: 20px;
+            }
+            /* 竖屏时，网格变回 1 列 (您要求的保留竖屏模式) */
+            .screens-grid {
+                grid-template-columns: 1fr; /* 1列布局 */
+                width: 80%; /* 稍微收窄一点，居中好看 */
+                margin: 0 auto;
+            }
+        }
+        /* --- 悬浮下载按钮样式 --- */
+        .fab-download {
+            position: fixed;
+            bottom: 40px;
+            right: 40px;
+            width: 65px;
+            height: 65px;
+            background-color: var(--text-main); /* 使用深棕色主色调 */
+            color: #fff;
+            border-radius: 50%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+            box-shadow: 0 6px 20px rgba(93, 64, 55, 0.4);
+            z-index: 2000; /* 确保层级最高，遮盖住其他元素 */
+            transition: transform 0.3s ease, background-color 0.3s;
+            cursor: pointer;
+            font-family: 'Nunito', sans-serif;
+        }
+        .fab-download:hover {
+            transform: scale(1.1) translateY(-5px);
+            background-color: #4e342e;
+        }
+        /* 图标样式 */
+        .fab-download svg {
+            width: 24px;
+            height: 24px;
+            fill: currentColor;
+            margin-bottom: 2px;
+        }
+        /* 文字样式 */
+        .fab-download span {
+            font-size: 10px;
+            font-weight: bold;
+            letter-spacing: 1px;
+        }
+        /* 呼吸动画：让按钮动起来吸引注意 */
+        @keyframes pulse-shadow {
+            0% { box-shadow: 0 0 0 0 rgba(93, 64, 55, 0.4); }
+            70% { box-shadow: 0 0 0 15px rgba(93, 64, 55, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(93, 64, 55, 0); }
+        }
+        .fab-download {
+            animation: pulse-shadow 2s infinite;
+        }
+        /* 移动端适配：稍微调整位置，避免遮挡内容 */
+        @media screen and (max-width: 768px) {
+            .fab-download {
+                bottom: 30px;
+                right: 20px;
+                width: 55px;
+                height: 55px;
+            }
+            .fab-download svg {
+                width: 20px;
+                height: 20px;
+            }
+            .fab-download span {
+                font-size: 9px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 悬浮下载按钮 -->
+    <a href="./xinxu.apk" class="fab-download" download="心序App.apk" title="下载安卓客户端">
+        <!-- SVG 下载图标 -->
+        <svg viewBox="0 0 24 24">
+            <path d="M19,9h-4V3H9v6H5l7,7L19,9z M5,18v2h14v-2H5z"/>
+        </svg>
+        <span>APP</span>
+    </a>
+    <!-- 顶部导航 -->
+    <nav class="navbar">
+        <div class="logo-container">
+            <div class="app-icon"><img src="img/icon.png" width=100%></img></div>
+            <span class="brand-name">心序</span>
+        </div>
+        <div class="nav-links">
+            <div class="nav-item active" onclick="jumpToPage(0)">首页</div>
+            <div class="nav-item" onclick="jumpToPage(1)">产品理念</div>
+            <div class="nav-item" onclick="jumpToPage(2)">市场数据</div>
+            <div class="nav-item" onclick="jumpToPage(3)">用户画像</div>
+            <div class="nav-item" onclick="jumpToPage(4)">竞品分析</div>
+            <div class="nav-item" onclick="jumpToPage(5)">核心功能</div>
+            <div class="nav-item" onclick="jumpToPage(6)">未来发行</div>
+            <div class="nav-item" onclick="jumpToPage(7)">反馈</div>
+        </div>
+    </nav>
+
+    <!-- 左右翻页按钮 -->
+    <button class="nav-btn prev-btn" onclick="prevPage()" id="btnPrev">❮</button>
+    <button class="nav-btn next-btn" onclick="nextPage()" id="btnNext">❯</button>
+
+    <!-- 主舞台 -->
+    <div class="main-stage">
+        <div class="calendar-container" id="calendar">
+            
+            <!-- 线圈装饰 -->
+            <div class="binder-top">
+                <div class="ring"></div><div class="ring"></div><div class="ring"></div>
+                <div class="ring"></div><div class="ring"></div><div class="ring"></div>
+                <div class="ring"></div><div class="ring"></div>
+            </div>
+
+            <!-- PAGE 8: 评论与反馈 -->
+            <div class="page" id="page-7" style="z-index: 1;">
+                <div class="page-content">
+                    <div class="col-left">
+                        <h2>评论与建议</h2>
+
+                        <!-- 评论列表容器：设置了最大高度和滚动条，新消息多了也不怕 -->
+                        <div id="comment-list" style="flex: 1; overflow-y: auto; padding-right: 10px; max-height: 400px; scrollbar-width: thin; scrollbar-color: #d7ccc8 transparent;">
+
+                            <!-- 现有的静态评论 -->
+                            <div class="comment-item" style="background: #fff; padding: 15px; border-radius: 12px; margin-bottom: 10px; border: 1px solid #eee;">
+                                <div style="display:flex; justify-content:space-between; align-items:center;">
+                                    <p style="color: #999; font-size: 0.8rem; margin:0;">用户: 匿名学生</p>
+                                    <p style="color: #ccc; font-size: 0.7rem; margin:0;">10分钟前</p>
+                                </div>
+                                <p style="margin:5px 0;">"四格漫画太可爱了！终于不用对着空白屏幕发呆了。"</p>
+                            </div>
+                        
+                            <div class="comment-item" style="background: #fff; padding: 15px; border-radius: 12px; margin-bottom: 10px; border: 1px solid #eee;">
+                                <div style="display:flex; justify-content:space-between; align-items:center;">
+                                    <p style="color: #999; font-size: 0.8rem; margin:0;">用户: 内测员A</p>
+                                    <p style="color: #ccc; font-size: 0.7rem; margin:0;">2小时前</p>
+                                </div>
+                                <p style="margin:5px 0;">"情绪分析很准，感觉AI真的在听我说话。"</p>
+                            </div>
+                        
+                            <!-- 新的评论会被插入到这里 -->
+                        
+                        </div>
+                    </div>
+                
+                    <div class="col-right">
+                        <h3>期待您的声音</h3>
+                        <textarea id="feedback-input" style="width: 100%; height: 120px; border: 2px solid #edddd4; border-radius: 10px; padding: 10px; box-sizing:border-box; outline: none; resize: none; font-family:inherit; font-size: 1rem;" placeholder="写下您的想法..."></textarea>
+
+                        <button onclick="submitComment()" style="margin-top:20px; width:100%; padding: 12px; background: var(--text-light); color: white; border: none; border-radius: 20px; cursor: pointer; font-weight:bold; transition: background 0.3s;">
+                            提交反馈
+                        </button>
+                    </div>
+                </div>
+                <div class="page-num">08</div>
+            </div>
+
+            <script>
+                // 定义提交评论的函数
+                function submitComment() {
+                    // 1. 获取输入框和评论列表元素
+                    const input = document.getElementById('feedback-input');
+                    const list = document.getElementById('comment-list');
+                    const text = input.value.trim(); // 去除首尾空格
+                
+                    // 2. 检查输入是否为空
+                    if (!text) {
+                        alert("请先输入您的想法哦~");
+                        return;
+                    }
+                
+                    // 3. 创建一个新的 div 元素
+                    const newComment = document.createElement('div');
+
+                    // 4. 设置和现有评论一样的样式
+                    newComment.style.cssText = "background: #fff; padding: 15px; border-radius: 12px; margin-bottom: 10px; border: 1px solid #eee; animation: fadeIn 0.5s ease;";
+
+                    // 5. 填充 HTML 内容 (模拟当前时间)
+                    const now = new Date();
+                    const timeString = `${now.getHours()}:${String(now.getMinutes()).padStart(2, '0')}`; // 格式如 14:05
+                
+                    newComment.innerHTML = `
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <p style="color: var(--text-light); font-weight:bold; font-size: 0.8rem; margin:0;">用户: 我 (刚刚)</p>
+                            <p style="color: #ccc; font-size: 0.7rem; margin:0;">${timeString}</p>
+                        </div>
+                        <p style="margin:5px 0;">"${text}"</p>
+                    `;
+                    
+                    // 6. 将新评论插入到列表的最前面
+                    list.insertBefore(newComment, list.firstChild);
+                    
+                    // 7. 清空输入框并滚动到顶部
+                    input.value = '';
+                    list.scrollTop = 0;
+                }
+            </script>
+
+            <style>
+                /* 添加一个简单的淡入动画，让评论出现得更自然 */
+                @keyframes fadeIn {
+                    from { opacity: 0; transform: translateY(-10px); }
+                    to { opacity: 1; transform: translateY(0); }
+                }
+            </style>
+            <!-- PAGE 7: 未来展望 & 发行 -->
+            <div class="page" id="page-6" style="z-index: 2;">
+                <div class="page-content">
+                    <div class="col-left">
+                        <h2>发行策略</h2>
+                        <p><strong>第1周：</strong> 武汉大学院内小范围试运行。</p>
+                        <p><strong>第2-3周：</strong> 联动校园集市，正式上线推广。</p>
+                        <h3>风险控制</h3>
+                        <div class="highlight-box">
+                            <strong>隐私：</strong> 本地化加密，坚持最低数据暴露原则。<br>
+                            <strong>合规：</strong> AI 生成限制，不仅是记录，更要安全。
+                        </div>
+                    </div>
+                    <div class="col-right">
+                        <h2>未来展望</h2>
+                        <div style="display:flex; flex-direction:column; gap:20px;">
+                            <div style="text-align: center;">
+                                <div style="font-size: 3rem;">🏙️</div>
+                                <strong>服务城市青年</strong>
+                                <p style="font-size:0.9rem; text-align:center;">解决快节奏下的普遍焦虑。</p>
+                            </div>
+                            <div style="text-align: center;">
+                                <div style="font-size: 3rem;">🤖</div>
+                                <strong>数字伴侣</strong>
+                                <p style="font-size:0.9rem; text-align:center;">全天候的AI心理伙伴。</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="page-num">07</div>
+            </div>
+
+            <!-- PAGE 6: 功能展示 -->
+            <div class="page" id="page-5" style="z-index: 3;">
+                <div class="page-content">
+                    <div class="col-left">
+                        <h2>核心功能</h2>
+                    
+                        <div class="highlight-box">
+                            <h3>1. 一天四格 (AIGC)</h3>
+                            <p>回答4个简单问题，AI自动生成专属四格漫画。记录生活的每一个精彩切片。</p>
+                        </div>
+                    
+                        <div class="highlight-box">
+                            <h3>2. 情绪轮盘</h3>
+                            <p>告别枯燥文字，用色彩选择心境，支持自定义手绘表情，让情绪可视化。</p>
+                        </div>
+                    
+                        <div class="highlight-box">
+                            <h3>3. 智能体对话</h3>
+                            <p>基于情绪周、月报，提供暖心的情感建议与陪伴，做你最忠实的听众。</p>
+                        </div>
+
+                        <!-- 增加一个提示 -->
+                        <p style="font-size: 0.8rem; color: #aaa; margin-top: 10px;">(右侧列表可上下滑动查看更多)</p>
+                    </div>
+                
+                    <!-- 注意这里类名的变化：改为 col-right-scrollable -->
+                    <div class="col-right-scrollable">
+                        <!-- 四格展示区域 -->
+                        <div class="screens-grid">
+                        
+                            <!-- 图片 1 -->
+                            <div class="screen-item">
+                                <div class="img-container">
+                                    <img src="img/2.jpg" alt="四格漫画生成界面"> 
+                                </div>
+                                <div class="screen-caption">🎨 漫画生成结果</div>
+                            </div>
+                        
+                            <!-- 图片 2 -->
+                            <div class="screen-item">
+                                <div class="img-container">
+                                    <img src="img/3.jpg" alt="情绪轮盘界面">
+                                </div>
+                                <div class="screen-caption">🎡 情绪记录轮盘</div>
+                            </div>
+                        
+                            <!-- 图片 3 -->
+                            <div class="screen-item">
+                                <div class="img-container">
+                                    <img src="img/4.jpg" alt="智能体聊天界面">
+                                </div>
+                                <div class="screen-caption">💬 智能体对话</div>
+                            </div>
+                        
+                            <!-- 图片 4 -->
+                            <div class="screen-item">
+                                <div class="img-container">
+                                    <img src="img/5.jpg" alt="情绪周报界面">
+                                </div>
+                                <div class="screen-caption">📊 情绪分析周报</div>
+                            </div>
+
+                            <!-- 您可以在这里继续添加更多图片 Item -->
+                        
+                        </div>
+                    </div>
+                </div>
+                <div class="page-num">06</div>
+            </div>
+
+            <!-- PAGE 5: 竞品分析 -->
+            <div class="page" id="page-4" style="z-index: 4;">
+                <div class="page-content">
+                    <div class="col-left">
+                        <h2>竞品分析</h2>
+                        <div class="highlight-box">
+                            <strong>现有手账 (Emmo/Mooda)</strong><br>
+                            劣势：表达单一，无法承载复杂情绪。
+                        </div>
+                        <div class="highlight-box">
+                            <strong>AI日记 (Rosebud)</strong><br>
+                            劣势：视觉化弱，本质仍是文字工具。
+                        </div>
+                        <h3>我们的优势</h3>
+                        <p>填补“可视化 + 私密记录”的市场空白，创造新品类。</p>
+                    </div>
+                    <div class="col-right">
+                        <div style="text-align: center;">
+                            <div style="height: 80px; width: 80px; background: var(--text-light); margin: 0 auto; border-radius: 50%; color: white; display:flex; align-items:center; justify-content:center; font-family:'ZCOOL XiaoWei'; font-size:1.2rem; box-shadow: 0 5px 15px rgba(141,110,99,0.3);">心序</div>
+                            <p style="margin-top:15px; font-weight:bold;">传统手账 + AI 绘画</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="page-num">05</div>
+            </div>
+
+            <!-- PAGE 4: 用户画像 -->
+            <div class="page" id="page-3" style="z-index: 5;">
+                <div class="page-content">
+                    <div class="col-left">
+                        <h2>Z世代用户画像：</h2>
+                        <p>基于216份问卷数据：</p>
+                        <p><strong>主力军：</strong> 18-24岁大学生 (56.2%)，一二线城市。</p>
+                        <p><strong>核心痛点：</strong> 69% 觉得纯文字记录太单调。</p>
+                        <div style="margin-top: 15px;">
+                            <span class="tag">深度互联网用户</span>
+                            <span class="tag">情绪敏感</span>
+                            <span class="tag">颜值正义</span>
+                        </div>
+                    </div>
+                    <div class="col-right">
+                        <h3>KANO 需求模型</h3>
+                        <ul style="list-style: none; padding: 0; width: 100%;">
+                            <li style="margin-bottom: 10px; display:flex; justify-content:space-between; border-bottom:1px solid #eee; padding-bottom:5px;">
+                                <span>一天四格</span>
+                                <span style="color:var(--text-light); font-weight:bold;">魅力属性 ★</span>
+                            </li>
+                            <li style="margin-bottom: 10px; display:flex; justify-content:space-between; border-bottom:1px solid #eee; padding-bottom:5px;">
+                                <span>AI 智能体</span>
+                                <span style="color:var(--text-light); font-weight:bold;">魅力属性 ★</span>
+                            </li>
+                            <li style="margin-bottom: 10px; display:flex; justify-content:space-between;">
+                                <span>基础记录</span>
+                                <span style="color:#999;">必备属性</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="page-num">04</div>
+            </div>
+
+            <!-- PAGE 3: 市场调查 -->
+            <div class="page" id="page-2" style="z-index: 6;">
+                <div class="page-content">
+                    <div class="col-left">
+                        <h2>市场机会</h2>
+                        <h3>情绪经济蓝海</h3>
+                        <p>73.6% 城镇居民处于心理亚健康状态。2024年情绪经济规模达 <strong>2.3万亿</strong>。</p>
+                        <h3>政策支持</h3>
+                        <p>国家发文支持“数字消费”与“体验消费”，为情绪类产品提供宏观契机。</p>
+                    </div>
+                    <div class="col-right">
+                        <div style="text-align: center; margin-bottom: 20px;">
+                            <h1 style="font-size: 3.5rem; color: var(--text-light); margin: 0;">2.3万亿</h1>
+                            <p>市场规模</p>
+                        </div>
+                        <div style="text-align: center;">
+                            <h1 style="font-size: 3.5rem; color: var(--text-light); margin: 0;">+12.3%</h1>
+                            <p>手账行业增长</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="page-num">03</div>
+            </div>
+
+            <!-- PAGE 2: 理念初衷 -->
+            <div class="page" id="page-1" style="z-index: 7;">
+                <div class="page-content">
+                    <div class="col-left">
+                        <h2>创立初衷</h2>
+                        <h3 style="color: var(--text-main); font-style: italic;">“心间万象，序而成章”</h3>
+                        <p>我们想解决两个问题：<br>1. 提笔忘字，觉得记录困难，难以管理情绪。<br>2. 现有App太冷冰冰，缺乏温度。</p>
+                        <p><strong>心序</strong> 将 <strong>AI对话和绘画</strong> 引入私密情绪手账，让管理和表达心情变得零门槛。</p>
+                    </div>
+                    <div class="col-right">
+                        <div class="highlight-box" style="width: 90%;">
+                            <strong>产品定位</strong>
+                            <p style="margin:5px 0 0 0;">面向Z世代，融合 AIGC 视觉创作与情绪疗愈的数字记录空间。</p>
+                        </div>
+                        <div style="margin-top:20px; font-size:4rem;">🧘‍♀️</div>
+                    </div>
+                </div>
+                <div class="page-num">02</div>
+            </div>
+
+            <!-- PAGE 1: 封面 -->
+            <div class="page" id="page-0" style="z-index: 8;">
+                <div class="page-content" style="flex-direction: column; align-items: center; justify-content: center; text-align: center;">
+                    <div style="margin-top: 10%;animation: float 3s ease-in-out infinite;"><img src="img/icon.png" width=20%></img></div>
+                    <h1>心序</h1>
+                    <p style="font-size: 1.2rem; letter-spacing: 3px; color: var(--text-light); margin-top:0;">AI 线上情绪记录产品</p>
+                    
+                    <div style="margin-top: 0px; color: #888; font-size: 0.9rem;">
+                        <p style=" text-align: center;">李思宇 · 凌帅航 · 陈家明</p>
+                        <p style=" text-align: center;">指导教师：王朝阳 洪杰文 何明贵 谢湖伟</p>
+                        <p style=" text-align: center;">武汉大学新闻与传播学院2023级大实践</p>
+                    </div>
+                    <div class="drag-hint" style="position:static; margin-top:30px;">
+                        <span>👆 向上拖动或点击按钮翻页</span>
+                    </div>
+                </div>
+                <div class="page-num">01</div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        const pages = document.querySelectorAll('.page');
+        const navItems = document.querySelectorAll('.nav-item');
+        const btnPrev = document.getElementById('btnPrev');
+        const btnNext = document.getElementById('btnNext');
+        
+        let currentPageIndex = 0;
+        let isDragging = false;
+        let startY = 0;
+
+        // 初始化
+        function init() {
+            updateButtonState();
+            // 绑定拖动事件
+            pages.forEach((page, index) => {
+                page.addEventListener('mousedown', startDrag);
+                page.addEventListener('touchstart', startDrag, {passive: false});
+            });
+
+            document.addEventListener('mouseup', endDrag);
+            document.addEventListener('mousemove', drag);
+            document.addEventListener('touchend', endDrag);
+            document.addEventListener('touchmove', drag, {passive: false});
+        }
+
+        // --- 拖动逻辑 ---
+        function startDrag(e) {
+            const targetPage = e.target.closest('.page');
+            const targetIndex = parseInt(targetPage.id.split('-')[1]);
+            // 只有当前显示的页面可拖动
+            if (targetIndex !== currentPageIndex) return;
+
+            isDragging = true;
+            startY = e.type.includes('mouse') ? e.clientY : e.touches[0].clientY;
+            targetPage.classList.add('dragging');
+        }
+
+        function drag(e) {
+            if (!isDragging) return;
+            // 阻止默认滚动，仅在向上拖动时
+            const y = e.type.includes('mouse') ? e.clientY : e.touches[0].clientY;
+            if (startY - y > 10 && e.type.includes('touch')) {
+                 e.preventDefault(); 
+            }
+            
+            const diff = y - startY;
+            if (diff > 0) return; // 不能向下拖
+
+            const rotation = Math.max(-90, diff / 5);
+            const page = document.getElementById(`page-${currentPageIndex}`);
+            page.style.transform = `rotateX(${rotation}deg)`;
+        }
+
+        function endDrag(e) {
+            if (!isDragging) return;
+            isDragging = false;
+            
+            const page = document.getElementById(`page-${currentPageIndex}`);
+            page.classList.remove('dragging');
+            
+            const y = e.type.includes('mouse') ? e.clientY : e.changedTouches[0].clientY;
+            const diff = y - startY;
+
+            if (diff < -100) {
+                nextPage(); // 拖动幅度够大，翻页
+            } else {
+                page.style.transform = ''; // 恢复
+            }
+        }
+
+        // --- 翻页核心逻辑 ---
+        function nextPage() {
+            if (currentPageIndex >= pages.length - 1) return;
+            
+            const page = document.getElementById(`page-${currentPageIndex}`);
+            page.style.transform = ''; 
+            page.classList.add('flipped');
+            
+            currentPageIndex++;
+            updateNav();
+            updateButtonState();
+        }
+
+        function prevPage() {
+            if (currentPageIndex <= 0) return;
+
+            currentPageIndex--;
+            const page = document.getElementById(`page-${currentPageIndex}`);
+            page.classList.remove('flipped');
+            
+            updateNav();
+            updateButtonState();
+        }
+
+        // 点击导航跳转
+        function jumpToPage(index) {
+            if (index > currentPageIndex) {
+                for (let i = currentPageIndex; i < index; i++) {
+                    const page = document.getElementById(`page-${i}`);
+                    setTimeout(() => page.classList.add('flipped'), (i - currentPageIndex) * 100);
+                }
+            } else if (index < currentPageIndex) {
+                 for (let i = currentPageIndex - 1; i >= index; i--) {
+                    const page = document.getElementById(`page-${i}`);
+                    setTimeout(() => page.classList.remove('flipped'), (currentPageIndex - 1 - i) * 100);
+                }
+            }
+            currentPageIndex = index;
+            updateNav();
+            updateButtonState();
+        }
+
+        function updateNav() {
+            navItems.forEach((item, idx) => {
+                if (idx === currentPageIndex) {
+                    item.classList.add('active');
+                } else {
+                    item.classList.remove('active');
+                }
+            });
+        }
+
+        function updateButtonState() {
+            btnPrev.disabled = currentPageIndex === 0;
+            btnNext.disabled = currentPageIndex === pages.length - 1;
+            
+            btnPrev.style.opacity = currentPageIndex === 0 ? '0.3' : '1';
+            btnNext.style.opacity = currentPageIndex === pages.length - 1 ? '0.3' : '1';
+        }
+
+        init();
+    </script>
+</body>
+</html>
